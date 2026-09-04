@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: aishipingfenxi-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: TRANSCRIBE_URL
+        sync: false
+      - key: TRANSCRIBE_KEY
+        sync: false
+      - key: TRANSCRIBE_MODEL
+        sync: false
+      - key: AI_URL
+        sync: false
+      - key: AI_KEY
+        sync: false
+      - key: AI_MODEL
+        sync: false
+      - key: API_TIMEOUT_MS
+        value: "120000"

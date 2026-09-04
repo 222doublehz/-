@@ -22,6 +22,43 @@ npm start
 
 项目只使用 Node.js 内置模块，不需要安装第三方 npm 依赖。Node.js 需要支持原生 `fetch`、`FormData` 和 `Blob`，推荐 Node.js 20 或更高版本。
 
+## 云端部署
+
+项目需要拆分为两个服务：Cloudflare Pages 托管前端，Render 运行 Node.js 后端和 FFmpeg。Cloudflare Pages 只能提供网页文件，不能运行 [server.mjs](server.mjs) 中的 FFmpeg 视频处理逻辑。
+
+### 部署后端到 Render
+
+仓库已包含 [Dockerfile](Dockerfile)、[.dockerignore](.dockerignore) 和 [render.yaml](render.yaml)。在 Render 中连接 GitHub 仓库并创建 Web Service，选择 Docker 部署。也可以使用 Blueprint 导入 `render.yaml`。
+
+Render 服务需要设置以下环境变量：
+
+```env
+FRONTEND_ORIGIN=https://your-pages-project.pages.dev
+TRANSCRIBE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+TRANSCRIBE_KEY=你的语音转写密钥
+TRANSCRIBE_MODEL=你的语音模型
+AI_URL=https://example.com/
+AI_KEY=你的文字分析密钥
+AI_MODEL=你的文字分析模型
+API_TIMEOUT_MS=120000
+```
+
+`FRONTEND_ORIGIN` 填写实际的 Cloudflare Pages 完整地址；如果有多个前端来源，可以用英文逗号分隔。真实 Key 只能填写在 Render 的 Environment Variables 中，不要写入仓库。
+
+### 连接 Cloudflare Pages 前端
+
+Render 部署成功后，复制服务地址，例如 `https://aishipingfenxi-api.onrender.com`，编辑 [config.js](config.js)：
+
+```js
+window.APP_CONFIG = Object.freeze({
+  API_BASE_URL: 'https://aishipingfenxi-api.onrender.com',
+});
+```
+
+提交并推送后，Cloudflare Pages 会重新部署。浏览器随后会把 `/api/health` 和 `/api/analyze` 请求发送到 Render，而不是发送到 Pages 自身。
+
+Render 免费服务可能在一段时间不访问后休眠，首次健康检查或分析可能需要等待服务启动；长视频还可能受到实例内存、请求超时和上传限制影响。
+
 ## 配置
 
 ```env
@@ -35,6 +72,7 @@ AI_MODEL=your-analysis-model
 
 PORT=5179
 API_TIMEOUT_MS=120000
+FRONTEND_ORIGIN=http://localhost:5179
 ```
 
 `TRANSCRIBE_URL` 和 `AI_URL` 可以填写服务根地址，也可以填写完整接口地址。文字分析接口会自动补齐 `/v1/chat/completions`。

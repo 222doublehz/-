@@ -1,0 +1,11 @@
+.env
+.git/
+.claude/
+node_modules/
+*.log
+*.mp4
+*.mov
+*.webm
+*.mkv
+Dockerfile
+.dockerignore

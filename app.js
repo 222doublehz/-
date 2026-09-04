@@ -1,3 +1,6 @@
+const API_BASE_URL = String(window.APP_CONFIG?.API_BASE_URL || '').replace(/\/+$/, '');
+const apiUrl = (path) => `${API_BASE_URL}${path}`;
+
 const $ = (selector) => document.querySelector(selector);
 const dropzone = $('#dropzone');
 const fileInput = $('#fileInput');
@@ -178,7 +181,7 @@ async function analyzeViaServer() {
     language: $('#language').value,
     style: $('#style').value,
   });
-  const response = await fetch(`/api/analyze?${query}`, {
+  const response = await fetch(apiUrl(`/api/analyze?${query}`), {
     method: 'POST',
     headers: { 'Content-Type': selectedFile.type || 'application/octet-stream' },
     body: selectedFile,
@@ -191,7 +194,7 @@ async function analyzeViaServer() {
 }
 
 async function getHealth() {
-  const response = await fetch('/api/health', { cache: 'no-store' });
+  const response = await fetch(apiUrl('/api/health'), { cache: 'no-store' });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.error || `健康检查返回 ${response.status}`);
   return payload;

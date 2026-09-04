@@ -29,10 +29,33 @@ async function loadEnv() {
 
 await loadEnv();
 
-const send = (res, status, data, type = 'application/json; charset=utf-8') => {
+const allowedOrigins = new Set(
+  String(process.env.FRONTEND_ORIGIN || '*')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+);
+
+function corsHeaders(req) {
+  const requestOrigin = req.headers.origin;
+  const allowOrigin = allowedOrigins.has('*')
+    ? '*'
+    : requestOrigin && allowedOrigins.has(requestOrigin)
+      ? requestOrigin
+      : '';
+  return {
+    ...(allowOrigin ? { 'Access-Control-Allow-Origin': allowOrigin } : {}),
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Max-Age': '86400',
+    Vary: 'Origin',
+  };
+}
+
+const send = (req, res, status, data, type = 'application/json; charset=utf-8') => {
   res.writeHead(status, {
+    ...corsHeaders(req),
     'Content-Type': type,
-    'Access-Control-Allow-Origin': '*',
   });
   res.end(Buffer.isBuffer(data) || typeof data === 'string' ? data : JSON.stringify(data));
 };
@@ -510,23 +533,23 @@ function normalizeResult(result, transcript, transcriptSegments = []) {
 async function handleAnalyze(req, res) {
   const required = ['TRANSCRIBE_URL', 'TRANSCRIBE_KEY', 'TRANSCRIBE_MODEL', 'AI_URL', 'AI_KEY', 'AI_MODEL'];
   const missing = required.filter((key) => !process.env[key]);
-  if (missing.length) return send(res, 503, { error: `服务端配置不完整: ${missing.join(', ')}` });
+  if (missing.length) return send(req, res, 503, { error: `服务端配置不完整: ${missing.join(', ')}` });
 
   let media;
   try {
     media = await collect(req, 2 * 1024 * 1024 * 1024);
   } catch (error) {
-    return send(res, error.message === 'PAYLOAD_TOO_LARGE' ? 413 : 400, {
+    return send(req, res, error.message === 'PAYLOAD_TOO_LARGE' ? 413 : 400, {
       error: error.message === 'PAYLOAD_TOO_LARGE' ? '文件超过 2GB 限制' : '无法读取上传文件',
     });
   }
-  if (!media.length) return send(res, 400, { error: '没有收到视频文件' });
+  if (!media.length) return send(req, res, 400, { error: '没有收到视频文件' });
 
   let wav;
   try {
     wav = await extractWav(media);
   } catch (error) {
-    return send(res, 422, { error: '无法从视频提取音频', detail: error.message });
+    return send(req, res, 422, { error: '无法从视频提取音频', detail: error.message });
   }
 
   const url = new URL(req.url, 'http://localhost');
@@ -537,7 +560,7 @@ async function handleAnalyze(req, res) {
   try {
     transcription = await transcribe(wav, language);
   } catch (error) {
-    return send(res, 502, { error: '语音转写失败', detail: error.message });
+    return send(req, res, 502, { error: '语音转写失败', detail: error.message });
   }
 
   const transcript = transcription.text;
@@ -549,10 +572,10 @@ async function handleAnalyze(req, res) {
       transcription.segments,
     );
   } catch (error) {
-    return send(res, 502, { error: '文字分析失败', detail: error.message });
+    return send(req, res, 502, { error: '文字分析失败', detail: error.message });
   }
 
-  return send(res, 200, result);
+  return send(req, res, 200, result);
 }
 
 function healthPayload() {
@@ -569,24 +592,21 @@ function healthPayload() {
 const server = createServer(async (req, res) => {
   try {
     if (req.method === 'OPTIONS') {
-      res.writeHead(204, {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      });
+      res.writeHead(204, corsHeaders(req));
       return res.end();
     }
-    if (req.url === '/api/health' && req.method === 'GET') return send(res, 200, healthPayload());
+    if (req.url === '/api/health' && req.method === 'GET') return send(req, res, 200, healthPayload());
     if (req.url?.startsWith('/api/analyze') && req.method === 'POST') return handleAnalyze(req, res);
 
     const requestUrl = new URL(req.url, 'http://localhost');
     const relativePath = requestUrl.pathname === '/' ? 'index.html' : decodeURIComponent(requestUrl.pathname).replace(/^\/+/, '');
     const path = normalize(join(root, relativePath));
-    if (!path.startsWith(root)) return send(res, 403, { error: 'forbidden' });
+    if (!path.startsWith(root)) return send(req, res, 403, { error: 'forbidden' });
     const info = await stat(path);
     if (!info.isFile()) throw new Error('not file');
-    return send(res, 200, await readFile(path), mime[extname(path)] || 'application/octet-stream');
+    return send(req, res, 200, await readFile(path), mime[extname(path)] || 'application/octet-stream');
   } catch {
-    return send(res, 404, { error: 'not found' });
+    return send(req, res, 404, { error: 'not found' });
   }
 });
 
