@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DOUBLE · 行诺进出口视频分析工具</title>
+    <meta name="description" content="行诺进出口视频分析工具，上传视频后自动转写并提炼结构化洞察" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand"><div class="brand-mark">D</div><div><strong>DOUBLE</strong><span>DOUBLE定制化制作</span></div></div>
+        <nav class="nav"><a class="active" href="#"><span>✦</span> 视频分析</a></nav>
+      </aside>
+      <main class="main">
+        <section class="content">
+          <div class="headline"><div><p class="eyebrow">AI VIDEO ANALYSIS</p><h1>行诺进出口视频分析工具</h1><p class="subtitle">上传一段视频，DOUBLE 会自动完成转写、提炼与结构化整理。</p></div><button class="settings-trigger" id="openSettings">⚙ 服务配置</button></div>
+          <div class="workspace-grid"><section class="card upload-card"><div class="card-heading"><div><span class="section-kicker">STEP 01</span><h2>上传视频</h2></div><span class="status-pill">就绪</span></div><div class="dropzone" id="dropzone"><input id="fileInput" type="file" accept="video/mp4,video/quicktime,video/webm,video/x-matroska" hidden /><div class="upload-icon">↑</div><h3>拖拽视频到这里</h3><p>或 <button id="browseBtn">从电脑选择</button></p><small>单个文件最大 2GB · 当前语音模型建议 5 分钟以内</small></div><div class="file-preview hidden" id="filePreview"><div class="file-type">MP4</div><div class="file-meta"><b id="fileName">video.mp4</b><span id="fileSize">0 MB</span></div><button id="removeFile" class="remove">×</button></div><div class="options"><label>输出语言<select id="language"><option>中文（普通话）</option><option>English</option><option>日本語</option><option>自动检测</option></select></label><label>分析风格<select id="style"><option>深度提炼</option><option>简明摘要</option><option>会议纪要</option><option>内容脚本</option></select></label></div><button class="primary-btn" id="analyzeBtn" disabled><span>✦</span> 开始分析 <kbd>⌘ ↵</kbd></button><p class="demo-note">API 配置由服务端 .env 管理，Key 不会发送到浏览器。</p></section>
+            <section class="card result-card"><div class="card-heading"><div><span class="section-kicker">OUTPUT</span><h2>结构化洞察</h2></div><div class="result-actions"><button id="copyBtn" disabled>▣ 复制</button><button id="exportBtn" disabled>↓ 导出</button></div></div><div id="emptyState" class="empty-state"><div class="empty-orbit"><span>✦</span></div><h3>洞察将在这里出现</h3><p>上传视频后，完整文字稿与核心观点会按结构呈现。</p><div class="output-sample"><span>输出包含</span><b>主题 · 核心观点 · 一句话总结 · 关键案例</b></div></div><div id="processingState" class="processing hidden"><div class="loader"></div><h3 id="processingTitle">正在准备视频…</h3><p id="processingDesc">上传完成，马上开始处理</p><div class="processing-track"><i id="processingProgress"></i></div><small id="processingPercent">0%</small></div><div id="resultState" class="result-content hidden"><div class="result-top"><span class="success-dot"></span><span>分析完成</span><time id="resultTime">刚刚</time></div><div class="result-block"><span class="result-label">视频主题</span><h3 id="outTheme"></h3></div><div class="result-block"><span class="result-label">核心观点</span><ol id="outPoints"></ol></div><div class="result-block quote"><span class="result-label">一句话总结</span><p id="outSummary"></p></div><div class="result-block"><span class="result-label">关键案例</span><div id="outCases" class="case-list"></div></div></div></section></div>
+          <section class="transcript-card card" id="transcriptSection"><div class="card-heading"><div><span class="section-kicker">TRANSCRIPT</span><h2>完整文字稿</h2></div><button id="toggleTranscript" class="ghost-btn hidden">展开全文 ↓</button></div><div class="transcript-preview" id="transcriptPreview"><div class="transcript-list" id="transcriptList"><div class="transcript-row"><time class="transcript-time">00:00</time><p>完成分析后，每句话的起止时间和对应内容会显示在这里。</p></div></div></div></section>
+          <div class="footer-note"><span>✦</span> DOUBLE 使用服务端配置的语音模型与文字模型处理内容 · 你的文件仅用于本次分析</div>
+        </section>
+      </main>
+    </div>
+    <div class="modal hidden" id="settingsModal"><div class="modal-backdrop" data-close="true"></div><div class="modal-panel"><div class="modal-header"><div><span class="section-kicker">CONFIGURATION</span><h2>服务配置</h2><p>API Key 由本地服务端统一保管。</p></div><button class="close-btn" data-close="true">×</button></div><div class="service-status" id="serviceStatus">正在读取服务端配置…</div><div class="service-models"><div><span>语音模型</span><b id="statusTranscribeModel">-</b></div><div><span>文字模型</span><b id="statusAnalysisModel">-</b></div></div><div class="modal-hint">配置文件：项目目录 .env。浏览器不会保存或发送 API Key。</div><button class="primary-btn" data-close="true">关闭</button></div></div>
+    <script src="./app.js"></script>
+  </body>
+</html>
